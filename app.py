@@ -12,6 +12,10 @@ Expected model files in the same directory (produced by the training notebook):
 
 Both saved models already contain their own Rescaling / preprocess_input layers internally,
 so this app only needs to resize the uploaded image — no manual normalization required.
+
+Note: a `.streamlit/config.toml` ships alongside this file to force a consistent light
+theme. Without it, the app can render with low-contrast text if a viewer's browser or
+Streamlit Cloud deployment defaults to dark mode — keep that folder next to app.py.
 """
 
 import io
@@ -60,8 +64,14 @@ MODEL_REGISTRY = {
 }
 
 # =============================================================================
-# CUSTOM CSS — PREMIUM GLASSMORPHIC STYLING
+# CUSTOM CSS
 # =============================================================================
+# Design principle: this app forces its OWN consistent color scheme rather than
+# inheriting whatever light/dark theme the viewer's browser or Streamlit Cloud
+# happens to default to. Every custom-colored surface below explicitly sets
+# BOTH its background and its text color together (never one without the
+# other) — that mismatch was the cause of low-contrast, "invisible" text in
+# earlier versions.
 st.markdown(
     """
     <style>
@@ -73,7 +83,7 @@ st.markdown(
 
         /* Animated mesh gradient backdrop */
         .stApp {
-            background: linear-gradient(-45deg, #ede7ff, #e0f7fa, #ffe8f3, #eaf3ff);
+            background: linear-gradient(-45deg, #ede7ff, #e0f7fa, #ffe8f3, #eaf3ff) !important;
             background-size: 400% 400%;
             animation: gradientShift 18s ease infinite;
         }
@@ -83,40 +93,39 @@ st.markdown(
             100% { background-position: 0% 50%; }
         }
 
+        /* Force readable dark text everywhere inside the app, regardless of the
+           viewer's theme setting, so nothing ever renders as low-contrast gray. */
+        .stApp, .stApp p, .stApp span, .stApp li, .stApp label,
+        .stMarkdown, .stMarkdown p, .stMarkdown li, .stMarkdown span,
+        section[data-testid="stSidebar"] * {
+            color: #1F2937 !important;
+        }
+
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
 
-        /* Floating decorative paw prints */
-        .paw-field {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 0;
-            overflow: hidden;
-        }
-        .paw {
-            position: absolute;
-            font-size: 2.2rem;
-            opacity: 0.08;
-            animation: floatPaw 12s ease-in-out infinite;
-        }
-        @keyframes floatPaw {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50%      { transform: translateY(-30px) rotate(12deg); }
+        /* Native bordered containers (st.container(border=True)) get a card look */
+        div[data-testid="stVerticalBlockBorderWrapper"] {
+            background: rgba(255, 255, 255, 0.85) !important;
+            border-radius: 18px !important;
+            border: 1px solid rgba(124, 58, 237, 0.15) !important;
+            box-shadow: 0 8px 26px rgba(31, 38, 135, 0.08);
+            padding: 0.4rem 0.4rem;
         }
 
-        /* Hero header with gradient text + glow */
+        /* Hero header — every color set explicitly, safe on any theme */
         .hero {
             background: linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%);
             padding: 2.6rem 2rem;
             border-radius: 24px;
-            color: white;
             text-align: center;
             margin-bottom: 1.6rem;
             box-shadow: 0 20px 45px rgba(124, 58, 237, 0.35);
             position: relative;
-            z-index: 1;
             overflow: hidden;
+        }
+        .hero, .hero * {
+            color: #FFFFFF !important;
         }
         .hero::before {
             content: "";
@@ -132,11 +141,10 @@ st.markdown(
         }
         .hero h1 {
             font-family: 'Poppins', sans-serif;
-            font-size: 2.8rem;
+            font-size: 2.6rem;
             font-weight: 800;
             margin-bottom: 0.4rem;
             position: relative;
-            z-index: 1;
             text-shadow: 0 4px 18px rgba(0,0,0,0.15);
         }
         .hero p {
@@ -144,10 +152,7 @@ st.markdown(
             opacity: 0.95;
             margin: 0;
             position: relative;
-            z-index: 1;
         }
-
-        /* Hero stat pills */
         .hero-badges {
             display: flex;
             justify-content: center;
@@ -155,48 +160,35 @@ st.markdown(
             margin-top: 1.2rem;
             flex-wrap: wrap;
             position: relative;
-            z-index: 1;
         }
         .hero-badge {
-            background: rgba(255,255,255,0.18);
-            backdrop-filter: blur(6px);
-            border: 1px solid rgba(255,255,255,0.35);
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
             padding: 0.4rem 1rem;
             border-radius: 999px;
             font-size: 0.85rem;
             font-weight: 600;
         }
 
-        /* Glassmorphic section cards */
-        .section-card {
-            background: rgba(255,255,255,0.72);
-            backdrop-filter: blur(14px);
-            border-radius: 20px;
-            padding: 1.6rem 1.8rem;
-            box-shadow: 0 8px 30px rgba(31, 38, 135, 0.08);
-            border: 1px solid rgba(255,255,255,0.5);
-            margin-bottom: 1.4rem;
-            position: relative;
-            z-index: 1;
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
-        }
-        .section-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 14px 38px rgba(31, 38, 135, 0.14);
-        }
-        .section-card h3 {
+        /* Section headings inside cards */
+        .card-title {
             font-family: 'Poppins', sans-serif;
             font-weight: 700;
+            font-size: 1.2rem;
+            color: #1F2937 !important;
+            margin-bottom: 0.6rem;
         }
 
-        /* Result card with bounce + gradient */
+        /* Result card — every color explicit, safe on any theme */
         .result-card {
             border-radius: 22px;
             padding: 2rem 1.5rem;
             text-align: center;
-            color: white;
             box-shadow: 0 16px 34px rgba(0,0,0,0.18);
             animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .result-card, .result-card * {
+            color: #FFFFFF !important;
         }
         @keyframes popIn {
             0%   { opacity: 0; transform: scale(0.85) translateY(10px); }
@@ -220,7 +212,7 @@ st.markdown(
             font-size: 0.95rem;
             letter-spacing: 0.12em;
             text-transform: uppercase;
-            opacity: 0.85;
+            opacity: 0.9;
         }
 
         /* Circular confidence ring */
@@ -234,28 +226,32 @@ st.markdown(
         .confidence-ring-inner {
             width: 102px; height: 102px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.97);
+            background: #FFFFFF;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
+        }
+        .confidence-ring-inner, .confidence-ring-inner * {
+            color: #1F2937 !important;
         }
         .confidence-value {
             font-family: 'Poppins', sans-serif;
             font-size: 1.5rem;
             font-weight: 800;
-            color: #333;
         }
         .confidence-caption {
             font-size: 0.65rem;
-            color: #888;
             letter-spacing: 0.08em;
             text-transform: uppercase;
+            opacity: 0.6;
         }
 
-        /* Model badge chip in sidebar */
+        /* Model badge chip in sidebar — explicit colors */
+        .model-chip, .model-chip * {
+            color: #FFFFFF !important;
+        }
         .model-chip {
             display: inline-block;
             background: linear-gradient(135deg, #7C3AED, #06B6D4);
-            color: white;
             padding: 0.25rem 0.8rem;
             border-radius: 999px;
             font-size: 0.75rem;
@@ -263,41 +259,26 @@ st.markdown(
             margin-bottom: 0.6rem;
         }
 
-        /* File uploader dropzone polish (best-effort selector) */
+        /* File uploader dropzone polish (best-effort selector, degrades gracefully) */
         [data-testid="stFileUploaderDropzone"] {
             border-radius: 16px !important;
             border: 2px dashed #a78bfa !important;
             background: rgba(124, 58, 237, 0.04) !important;
         }
 
-        /* Footer */
+        /* Footer — explicit colors */
+        .app-footer, .app-footer * {
+            color: #6B7280 !important;
+        }
         .app-footer {
             text-align: center;
             padding: 1.4rem 0 0.4rem 0;
-            color: #8a8fa3;
             font-size: 0.85rem;
-            border-top: 1px solid rgba(0,0,0,0.06);
+            border-top: 1px solid rgba(0,0,0,0.08);
             margin-top: 2rem;
-            position: relative;
-            z-index: 1;
         }
-        .app-footer a { color: #7C3AED; text-decoration: none; font-weight: 600; }
-
-        /* Sidebar polish */
-        section[data-testid="stSidebar"] {
-            background: rgba(255,255,255,0.85);
-            backdrop-filter: blur(10px);
-            border-right: 1px solid rgba(0,0,0,0.06);
-        }
+        .app-footer a { color: #7C3AED !important; text-decoration: none; font-weight: 600; }
     </style>
-
-    <div class="paw-field">
-        <span class="paw" style="top:8%; left:5%; animation-delay:0s;">🐾</span>
-        <span class="paw" style="top:22%; left:85%; animation-delay:2s;">🐾</span>
-        <span class="paw" style="top:65%; left:12%; animation-delay:4s;">🐾</span>
-        <span class="paw" style="top:78%; left:90%; animation-delay:1s;">🐾</span>
-        <span class="paw" style="top:45%; left:50%; animation-delay:3s;">🐾</span>
-    </div>
     """,
     unsafe_allow_html=True,
 )
@@ -392,11 +373,16 @@ st.markdown(
 # =============================================================================
 # PROJECT DESCRIPTION
 # =============================================================================
-with st.container():
-    st.markdown('<div class="section-card">', unsafe_allow_html=True)
+# Using a real st.container(border=True) instead of a hand-rolled <div> that
+# gets split across two separate st.markdown() calls. Splitting HTML across
+# calls like that does NOT nest the widgets in between inside the div (each
+# markdown call is parsed as its own isolated fragment) — that was the bug
+# behind cards showing up empty. st.container(border=True) wraps everything
+# written inside its `with` block in one real parent element, guaranteed.
+with st.container(border=True):
+    st.markdown('<div class="card-title">📌 About</div>', unsafe_allow_html=True)
     st.markdown(
         """
-        ### 📌 About
         This demo is powered by a **Convolutional Neural Network** and a
         **MobileNetV2 transfer-learning model**, both trained on the Microsoft
         Cats vs Dogs dataset. Pick a model in the sidebar, upload a clear photo
@@ -404,7 +390,6 @@ with st.container():
         a confidence score.
         """
     )
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # =============================================================================
 # MAIN LAYOUT — UPLOAD + RESULTS
@@ -412,78 +397,71 @@ with st.container():
 col_upload, col_result = st.columns([1, 1], gap="large")
 
 with col_upload:
-    st.markdown('<div class="section-card">', unsafe_allow_html=True)
-    st.markdown("### 📤 Upload an Image")
-    uploaded_file = st.file_uploader(
-        "Choose a JPG or PNG image",
-        type=["jpg", "jpeg", "png"],
-        help="Best results with a clear, well-lit photo of a single cat or dog.",
-    )
-
-    pil_image = None
-    if uploaded_file is not None:
-        try:
-            pil_image = Image.open(io.BytesIO(uploaded_file.getvalue()))
-            st.image(pil_image, caption="Uploaded Image", use_container_width=True)
-        except UnidentifiedImageError:
-            st.error("⚠️ That file doesn't look like a valid image. Please upload a JPG or PNG.")
-        except Exception as exc:  # noqa: BLE001 - surface any unexpected read error to the user
-            st.error(f"⚠️ Couldn't read that file: {exc}")
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-with col_result:
-    st.markdown('<div class="section-card">', unsafe_allow_html=True)
-    st.markdown("### 🔍 Prediction")
-
-    if uploaded_file is None:
-        st.markdown(
-            "👋 Upload an image on the left to see the model's prediction here."
+    with st.container(border=True):
+        st.markdown('<div class="card-title">📤 Upload an Image</div>', unsafe_allow_html=True)
+        uploaded_file = st.file_uploader(
+            "Choose a JPG or PNG image",
+            type=["jpg", "jpeg", "png"],
+            help="Best results with a clear, well-lit photo of a single cat or dog.",
         )
 
-    elif pil_image is not None:
-        try:
-            with st.spinner("🧠 Analyzing image..."):
-                model = load_model(model_info["path"])
-                img_array = preprocess_image(pil_image, model_info["img_size"])
-                time.sleep(0.3)  # small delay so the spinner is visible for tiny models
-                label, confidence = predict(model, img_array)
+        pil_image = None
+        if uploaded_file is not None:
+            try:
+                pil_image = Image.open(io.BytesIO(uploaded_file.getvalue()))
+                st.image(pil_image, caption="Uploaded Image", use_container_width=True)
+            except UnidentifiedImageError:
+                st.error("⚠️ That file doesn't look like a valid image. Please upload a JPG or PNG.")
+            except Exception as exc:  # noqa: BLE001 - surface any unexpected read error to the user
+                st.error(f"⚠️ Couldn't read that file: {exc}")
 
-            start_color, end_color = CLASS_COLORS[label]
-            emoji = CLASS_EMOJIS[label]
+with col_result:
+    with st.container(border=True):
+        st.markdown('<div class="card-title">🔍 Prediction</div>', unsafe_allow_html=True)
 
-            st.markdown(
-                f"""
-                <div class="result-card" style="background: linear-gradient(135deg, {start_color} 0%, {end_color} 100%);">
-                    <div class="result-label">Prediction</div>
-                    <div class="emoji-big">{emoji}</div>
-                    <h2>{label}</h2>
-                    <div class="confidence-ring" style="background: conic-gradient(white {confidence:.1f}%, rgba(255,255,255,0.25) {confidence:.1f}% 100%);">
-                        <div class="confidence-ring-inner">
-                            <div class="confidence-value">{confidence:.1f}%</div>
-                            <div class="confidence-caption">Confidence</div>
+        if uploaded_file is None:
+            st.markdown("👋 Upload an image on the left to see the model's prediction here.")
+
+        elif pil_image is not None:
+            try:
+                with st.spinner("🧠 Analyzing image..."):
+                    model = load_model(model_info["path"])
+                    img_array = preprocess_image(pil_image, model_info["img_size"])
+                    time.sleep(0.3)  # small delay so the spinner is visible for tiny models
+                    label, confidence = predict(model, img_array)
+
+                start_color, end_color = CLASS_COLORS[label]
+                emoji = CLASS_EMOJIS[label]
+
+                st.markdown(
+                    f"""
+                    <div class="result-card" style="background: linear-gradient(135deg, {start_color} 0%, {end_color} 100%);">
+                        <div class="result-label">Prediction</div>
+                        <div class="emoji-big">{emoji}</div>
+                        <h2>{label}</h2>
+                        <div class="confidence-ring" style="background: conic-gradient(white {confidence:.1f}%, rgba(255,255,255,0.25) {confidence:.1f}% 100%);">
+                            <div class="confidence-ring-inner">
+                                <div class="confidence-value">{confidence:.1f}%</div>
+                                <div class="confidence-caption">Confidence</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+                    """,
+                    unsafe_allow_html=True,
+                )
 
-            st.caption(f"Model used: {selected_model_name}")
+                st.caption(f"Model used: {selected_model_name}")
 
-            # 🎉 A little delight for a highly confident prediction
-            if confidence >= 90:
-                st.balloons()
+                if confidence >= 90:
+                    st.balloons()
 
-        except FileNotFoundError:
-            st.error(
-                f"⚠️ Model file `{model_info['path']}` was not found. "
-                "Make sure it's saved in the same folder as this app."
-            )
-        except Exception as exc:  # noqa: BLE001 - fail gracefully, never crash the UI
-            st.error(f"⚠️ Something went wrong during prediction: {exc}")
-
-    st.markdown("</div>", unsafe_allow_html=True)
+            except FileNotFoundError:
+                st.error(
+                    f"⚠️ Model file `{model_info['path']}` was not found. "
+                    "Make sure it's saved in the same folder as this app."
+                )
+            except Exception as exc:  # noqa: BLE001 - fail gracefully, never crash the UI
+                st.error(f"⚠️ Something went wrong during prediction: {exc}")
 
 # =============================================================================
 # FOOTER
