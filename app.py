@@ -1,7 +1,7 @@
 """
 🐱 Cats vs Dogs Classifier — Streamlit Web App 🐶
 ==================================================
-A clean, modern web interface for the Cats vs Dogs image classification project.
+A premium, modern web interface for the Cats vs Dogs image classification project.
 
 Run locally with:
     streamlit run app.py
@@ -34,6 +34,10 @@ st.set_page_config(
 
 CLASS_NAMES = ["Cat", "Dog"]
 CLASS_EMOJIS = {"Cat": "🐱", "Dog": "🐶"}
+CLASS_COLORS = {
+    "Cat": ("#FA709A", "#FEE140"),   # warm sunset gradient
+    "Dog": ("#4FACFE", "#00F2FE"),   # cool ocean gradient
+}
 
 # Model registry: everything the UI needs to know about each available model.
 MODEL_REGISTRY = {
@@ -43,123 +47,257 @@ MODEL_REGISTRY = {
         "description": "Pre-trained on ImageNet, fine-tuned on Cats vs Dogs. "
                         "Higher accuracy, recommended default.",
         "params_note": "~2.3M trainable params (after fine-tuning top layers)",
+        "badge": "⚡ Recommended",
     },
     "CNN (Built From Scratch)": {
         "path": "cats_vs_dogs_cnn.keras",
         "img_size": (128, 128),
         "description": "A custom convolutional network trained from random weights. "
                         "Lighter, fully transparent architecture.",
-        "params_note": "~3 conv blocks + dense head",
+        "params_note": "3 conv blocks + dense head",
+        "badge": "🧩 Educational",
     },
 }
 
 # =============================================================================
-# CUSTOM CSS — MODERN, CLEAN STYLING
+# CUSTOM CSS — PREMIUM GLASSMORPHIC STYLING
 # =============================================================================
 st.markdown(
     """
     <style>
-        /* Overall page */
-        .stApp {
-            background: linear-gradient(180deg, #fafbff 0%, #f3f5fb 100%);
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&display=swap');
+
+        html, body, [class*="css"] {
+            font-family: 'Inter', sans-serif;
         }
 
-        /* Hide default Streamlit chrome for a cleaner look */
+        /* Animated mesh gradient backdrop */
+        .stApp {
+            background: linear-gradient(-45deg, #ede7ff, #e0f7fa, #ffe8f3, #eaf3ff);
+            background-size: 400% 400%;
+            animation: gradientShift 18s ease infinite;
+        }
+        @keyframes gradientShift {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
 
-        /* Hero header */
-        .hero {
-            background: linear-gradient(135deg, #6C5CE7 0%, #00B8D9 100%);
-            padding: 2.2rem 2rem;
-            border-radius: 18px;
-            color: white;
-            text-align: center;
-            margin-bottom: 1.8rem;
-            box-shadow: 0 10px 30px rgba(108, 92, 231, 0.25);
-        }
-        .hero h1 {
-            font-size: 2.4rem;
-            margin-bottom: 0.3rem;
-            font-weight: 800;
-        }
-        .hero p {
-            font-size: 1.05rem;
-            opacity: 0.92;
-            margin: 0;
-        }
-
-        /* Section card */
-        .section-card {
-            background: white;
-            border-radius: 16px;
-            padding: 1.5rem 1.7rem;
-            box-shadow: 0 4px 18px rgba(0,0,0,0.06);
-            margin-bottom: 1.4rem;
-            border: 1px solid #eef0f7;
-        }
-
-        /* Result cards */
-        .result-card {
-            border-radius: 18px;
-            padding: 1.8rem;
-            text-align: center;
-            color: white;
-            box-shadow: 0 10px 24px rgba(0,0,0,0.12);
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        .result-card.dog {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-        .result-card.cat {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }
-        .result-card h2 {
-            font-size: 2.6rem;
-            margin: 0.2rem 0;
-        }
-        .result-card .confidence {
-            font-size: 1.15rem;
-            font-weight: 600;
-            opacity: 0.95;
-        }
-
-        /* Confidence bar */
-        .conf-bar-bg {
-            background: rgba(255,255,255,0.35);
-            border-radius: 10px;
-            height: 14px;
-            width: 100%;
-            margin-top: 0.8rem;
+        /* Floating decorative paw prints */
+        .paw-field {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
             overflow: hidden;
         }
-        .conf-bar-fill {
-            background: white;
-            height: 100%;
-            border-radius: 10px;
+        .paw {
+            position: absolute;
+            font-size: 2.2rem;
+            opacity: 0.08;
+            animation: floatPaw 12s ease-in-out infinite;
+        }
+        @keyframes floatPaw {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50%      { transform: translateY(-30px) rotate(12deg); }
+        }
+
+        /* Hero header with gradient text + glow */
+        .hero {
+            background: linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%);
+            padding: 2.6rem 2rem;
+            border-radius: 24px;
+            color: white;
+            text-align: center;
+            margin-bottom: 1.6rem;
+            box-shadow: 0 20px 45px rgba(124, 58, 237, 0.35);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 60%);
+            animation: shimmer 6s linear infinite;
+        }
+        @keyframes shimmer {
+            0%   { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .hero h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 0.4rem;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 4px 18px rgba(0,0,0,0.15);
+        }
+        .hero p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            margin: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Hero stat pills */
+        .hero-badges {
+            display: flex;
+            justify-content: center;
+            gap: 0.7rem;
+            margin-top: 1.2rem;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-badge {
+            background: rgba(255,255,255,0.18);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.35);
+            padding: 0.4rem 1rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Glassmorphic section cards */
+        .section-card {
+            background: rgba(255,255,255,0.72);
+            backdrop-filter: blur(14px);
+            border-radius: 20px;
+            padding: 1.6rem 1.8rem;
+            box-shadow: 0 8px 30px rgba(31, 38, 135, 0.08);
+            border: 1px solid rgba(255,255,255,0.5);
+            margin-bottom: 1.4rem;
+            position: relative;
+            z-index: 1;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .section-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 38px rgba(31, 38, 135, 0.14);
+        }
+        .section-card h3 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+        }
+
+        /* Result card with bounce + gradient */
+        .result-card {
+            border-radius: 22px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            color: white;
+            box-shadow: 0 16px 34px rgba(0,0,0,0.18);
+            animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes popIn {
+            0%   { opacity: 0; transform: scale(0.85) translateY(10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .result-card .emoji-big {
+            font-size: 3.4rem;
+            display: inline-block;
+            animation: bounce 1.4s ease infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(-8px); }
+        }
+        .result-card h2 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2rem;
+            margin: 0.3rem 0 0.2rem 0;
+        }
+        .result-label {
+            font-size: 0.95rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            opacity: 0.85;
+        }
+
+        /* Circular confidence ring */
+        .confidence-ring {
+            width: 130px; height: 130px;
+            border-radius: 50%;
+            margin: 1.1rem auto 0.6rem auto;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: inset 0 0 0 6px rgba(255,255,255,0.15);
+        }
+        .confidence-ring-inner {
+            width: 102px; height: 102px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.97);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .confidence-value {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #333;
+        }
+        .confidence-caption {
+            font-size: 0.65rem;
+            color: #888;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        /* Model badge chip in sidebar */
+        .model-chip {
+            display: inline-block;
+            background: linear-gradient(135deg, #7C3AED, #06B6D4);
+            color: white;
+            padding: 0.25rem 0.8rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.6rem;
+        }
+
+        /* File uploader dropzone polish (best-effort selector) */
+        [data-testid="stFileUploaderDropzone"] {
+            border-radius: 16px !important;
+            border: 2px dashed #a78bfa !important;
+            background: rgba(124, 58, 237, 0.04) !important;
         }
 
         /* Footer */
         .app-footer {
             text-align: center;
-            padding: 1.2rem 0 0.4rem 0;
+            padding: 1.4rem 0 0.4rem 0;
             color: #8a8fa3;
             font-size: 0.85rem;
-            border-top: 1px solid #e5e7ef;
+            border-top: 1px solid rgba(0,0,0,0.06);
             margin-top: 2rem;
+            position: relative;
+            z-index: 1;
         }
+        .app-footer a { color: #7C3AED; text-decoration: none; font-weight: 600; }
 
-        @keyframes fadeIn {
-            from {opacity: 0; transform: translateY(8px);}
-            to {opacity: 1; transform: translateY(0);}
-        }
-
-        /* Sidebar */
+        /* Sidebar polish */
         section[data-testid="stSidebar"] {
-            background: #ffffff;
-            border-right: 1px solid #eef0f7;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(0,0,0,0.06);
         }
     </style>
+
+    <div class="paw-field">
+        <span class="paw" style="top:8%; left:5%; animation-delay:0s;">🐾</span>
+        <span class="paw" style="top:22%; left:85%; animation-delay:2s;">🐾</span>
+        <span class="paw" style="top:65%; left:12%; animation-delay:4s;">🐾</span>
+        <span class="paw" style="top:78%; left:90%; animation-delay:1s;">🐾</span>
+        <span class="paw" style="top:45%; left:50%; animation-delay:3s;">🐾</span>
+    </div>
     """,
     unsafe_allow_html=True,
 )
@@ -207,6 +345,8 @@ with st.sidebar:
     )
     model_info = MODEL_REGISTRY[selected_model_name]
 
+    st.markdown(f'<span class="model-chip">{model_info["badge"]}</span>', unsafe_allow_html=True)
+
     st.markdown("### 📋 Model Details")
     st.markdown(
         f"""
@@ -239,6 +379,11 @@ st.markdown(
     <div class="hero">
         <h1>🐾 Cats vs Dogs Classifier</h1>
         <p>Upload a photo and let a deep learning model decide — cat or dog?</p>
+        <div class="hero-badges">
+            <div class="hero-badge">🧠 Deep Learning</div>
+            <div class="hero-badge">⚡ TensorFlow / Keras</div>
+            <div class="hero-badge">🎯 Instant Prediction</div>
+        </div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -304,17 +449,20 @@ with col_result:
                 time.sleep(0.3)  # small delay so the spinner is visible for tiny models
                 label, confidence = predict(model, img_array)
 
-            css_class = "dog" if label == "Dog" else "cat"
+            start_color, end_color = CLASS_COLORS[label]
             emoji = CLASS_EMOJIS[label]
 
             st.markdown(
                 f"""
-                <div class="result-card {css_class}">
-                    <div style="font-size:1rem; opacity:0.9;">Prediction</div>
-                    <h2>{emoji} {label}</h2>
-                    <div class="confidence">Confidence: {confidence:.2f}%</div>
-                    <div class="conf-bar-bg">
-                        <div class="conf-bar-fill" style="width:{confidence:.1f}%;"></div>
+                <div class="result-card" style="background: linear-gradient(135deg, {start_color} 0%, {end_color} 100%);">
+                    <div class="result-label">Prediction</div>
+                    <div class="emoji-big">{emoji}</div>
+                    <h2>{label}</h2>
+                    <div class="confidence-ring" style="background: conic-gradient(white {confidence:.1f}%, rgba(255,255,255,0.25) {confidence:.1f}% 100%);">
+                        <div class="confidence-ring-inner">
+                            <div class="confidence-value">{confidence:.1f}%</div>
+                            <div class="confidence-caption">Confidence</div>
+                        </div>
                     </div>
                 </div>
                 """,
@@ -322,6 +470,10 @@ with col_result:
             )
 
             st.caption(f"Model used: {selected_model_name}")
+
+            # 🎉 A little delight for a highly confident prediction
+            if confidence >= 90:
+                st.balloons()
 
         except FileNotFoundError:
             st.error(
